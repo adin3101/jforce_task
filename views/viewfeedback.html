@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Feedback</title>
+  <link href="style.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <h2>Your Feedback</h2>
+
+    
+    <div id="feedbackSection">
+      <h4>Your Previous Feedback</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>UserId</th>
+            <th>Feedback</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="feedbackTable">
+          
+        </tbody>
+      </table>
+    </div>
+
+    <div id="addFeedbackSection">
+      <h4>Add New Feedback</h4>
+      <form id="addFeedbackForm">
+        <label for="newFeedback">Your Feedback:</label>
+        <textarea id="newFeedback" name="feedback" rows="4" required></textarea>
+        <button type="submit">Submit Feedback</button>
+      </form>
+    </div>
+
+    <button id="logoutButton">Logout</button>
+  </div>
+
+  
+  <script>
+
+    const token = sessionStorage.getItem('authToken');
+
+    fetch('http://localhost:5500/feedback/feedbacks', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      
+    })
+    .then(response => response.json())
+    .then(feedbacks => {
+      console.log('Feedbacks Response:', feedbacks);
+      const feedbackTable = document.getElementById('feedbackTable');
+      feedbacks.forEach(feedback => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${feedback.userId}</td>
+          <td>${feedback.content}</td>
+          <td>${new Date(feedback.date).toLocaleDateString()}</td>
+          <td>
+            <button class="edit-btn" data-id="${feedback._id}">Edit</button>
+          </td>
+        `;
+        feedbackTable.appendChild(row);
+      });
+
+      
+          document.querySelectorAll('.edit-btn').forEach(button => {
+          button.addEventListener('click', function () {
+          const feedbackId = this.getAttribute('data-id');
+          window.location.href = `http://127.0.0.1:5500/views/edit.html?id=${feedbackId}`; 
+        });
+      });
+    })
+    .catch(err => console.error('Error loading feedbacks:', err));
+
+  
+    document.getElementById('addFeedbackForm')?.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const newFeedback = document.getElementById('newFeedback').value;
+      console.log(newFeedback);
+      
+      const userId = sessionStorage.getItem('userId');
+      fetch('http://localhost:5500/feedback/addfeedback', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        // credentials: 'include',
+        body: JSON.stringify({content:newFeedback,userId}),
+      })
+      .then(response => response.json())
+      .then(data => {
+        localStorage.setItem('feedbackId', data.feedback);
+        console.log(data);
+        
+        alert(data.message);
+        window.location.reload();
+      })
+      .catch(err => console.error('Error adding feedback:', err));
+    });
+
+    function logout() {
+  sessionStorage.clear();
+  window.location.replace('http://127.0.0.1:5500/views/login.html');
+  alert("YOU HAVE BEEN LOGGED OUT")
+        }
+        document.getElementById('logoutButton').addEventListener('click', logout);
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Feedback</title>
+  <link href="style.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <h2>Edit Feedback</h2>
+    <form id="editFeedbackForm">
+      <label for="feedbackContent">Your Feedback:</label>
+      <textarea id="feedbackContent" name="feedback" rows="4" required></textarea>
+      <button type="submit" class="edit-btn">Update Feedback</button>
+    </form>
+    
+  </div>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const feedbackId = urlParams.get('id');
+    const token = sessionStorage.getItem("authToken");
+    fetch(`http://localhost:5500/feedback/userfeedback/${feedbackId}`,{
+      method:"GET",
+      headers:{
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    }).then(response=>response.json())
+      .then(data=>{
+        document.getElementById('feedbackContent').value = data.content;
+      })
+      .catch(err => console.error('Error fetching feedback:', err));
+
+      document.getElementById('editFeedbackForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const updatedFeedback = document.getElementById('feedbackContent').value;
+      console.log(updatedFeedback);
+      
+      fetch(`http://localhost:5500/feedback/editfeedbacks/${feedbackId}`,{
+        method:"PUT",
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ content: updatedFeedback }),
+      })
+      .then(response => response.json())
+      .then(data => {
+        alert('Feedback updated successfully');
+      })
+      .catch(err => console.error('Error updating feedback:', err));
+    })
+  </script>
+</body>
+</html>
